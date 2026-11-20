@@ -3,22 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b1224">
   <title>SecureChat RSA</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <main class="shell">
     <header class="topbar">
-      <div class="brand"><span class="brand-icon">🔐</span><div><b>SecureChat RSA</b><small>Private messaging demo</small></div></div>
+      <div class="brand"><span class="brand-icon">🔐</span><div><b>SecureChat</b><small>Private conversations, protected by encryption</small></div></div>
       <div id="account" class="account hidden"></div>
     </header>
 
     <section id="authView" class="auth-grid">
       <div class="intro">
-        <span class="eyebrow">END-TO-END ENCRYPTION</span>
-        <h1>Your conversations.<br><em>Your keys.</em></h1>
-        <p>Create an account, share your chat ID, and exchange encrypted messages between devices.</p>
-        <div class="security-note">🛡️ Messages are encrypted in your browser before they reach the database.</div>
+        <span class="eyebrow">PRIVATE BY DESIGN</span>
+        <h1>Your people.<br><em>Your conversations.</em></h1>
+        <p>Connect with a User ID, create group conversations, and exchange messages encrypted on your device.</p>
+        <div class="security-note">🛡️ Messages are encrypted in your browser before they are saved to the database.</div>
       </div>
       <div class="panel auth-panel">
         <div class="tabs"><button class="tab active" data-tab="register">Create account</button><button class="tab" data-tab="login">Sign in</button></div>
@@ -29,7 +30,7 @@
           <label>Password</label><input id="password" type="password" minlength="6" autocomplete="current-password" placeholder="At least 6 characters" required>
           <button class="primary full" id="authSubmit">Create account</button>
         </form>
-        <p class="hint">Use a strong, unique password. This demo requires Firebase setup first.</p>
+        <p class="hint">Use a strong, unique password. Firebase setup is required before signing in.</p>
       </div>
     </section>
 
@@ -37,23 +38,46 @@
       <aside class="panel sidebar">
         <div class="profile">
           <div class="avatar" id="myAvatar">U</div>
-          <div class="profile-text"><b id="myName">User</b><small>Your chat ID</small></div>
+          <div class="profile-text"><b id="myName">User</b><small>Your personal User ID</small></div>
         </div>
-        <div class="id-card"><small>SHARE THIS ID</small><div><strong id="myCode">—</strong><button id="copyId" class="icon-btn" title="Copy ID">⧉</button></div></div>
-        <div class="key-status"><span class="dot"></span><span id="keyStatus">Preparing encryption keys…</span></div>
-        <button id="newChatBtn" class="secondary full">＋ Start a chat</button>
-        <div class="section-label">RECENT CONVERSATIONS</div>
-        <div id="chatList" class="chat-list"><p class="muted small">No conversations yet.</p></div>
+        <div class="id-card"><small>YOUR SHAREABLE ID</small><div><strong id="myCode">—</strong><button id="copyId" class="icon-btn" title="Copy ID">⧉</button></div></div>
+        <div class="key-status"><span class="dot"></span><span id="keyStatus">Your encryption keys are ready on this device</span></div>
+        <button id="newChatBtn" class="primary full">＋ New conversation</button>
+
+        <div class="section-label">CONVERSATIONS</div>
+        <div id="chatList" class="chat-list"><p class="muted small">Your conversations will appear here.</p></div>
+
+        <div class="section-label contacts-heading">SAVED ON THIS DEVICE</div>
+        <div id="savedContacts" class="saved-contacts"><p class="muted small">Your saved contacts appear here.</p></div>
+
+        <div class="notification-panel">
+          <button id="enableNotifications" class="secondary full">♧ Enable notifications</button>
+          <p id="notificationStatus" class="hint">Notifications are optional.</p>
+        </div>
         <button id="logoutBtn" class="logout">Sign out</button>
       </aside>
 
       <section class="panel conversation">
-        <div id="emptyState" class="empty-state"><div class="empty-lock">🔒</div><h2>Secure conversations start here</h2><p>Start a chat using another person's chat ID.</p><button class="primary" id="emptyNewChat">Start a chat</button></div>
+        <div id="emptyState" class="empty-state">
+          <div class="empty-lock">✦</div>
+          <span class="eyebrow">SECURECHAT</span>
+          <h2>A quieter, safer space to talk</h2>
+          <p>Start a conversation with one person or bring your group together.</p>
+          <button class="primary" id="emptyNewChat">Start a conversation</button>
+        </div>
         <div id="chatView" class="hidden chat-view">
-          <div class="chat-header"><div class="avatar" id="peerAvatar">U</div><div><b id="peerName">Contact</b><small id="peerCode">Chat ID</small></div><span class="encrypted-label">🔒 Encrypted</span></div>
+          <div class="chat-header">
+            <div class="avatar" id="peerAvatar">U</div>
+            <div class="chat-heading"><b id="peerName">Conversation</b><small id="peerCode">Members · End-to-end encrypted</small></div>
+            <span class="encrypted-label">🔒 Encrypted</span>
+          </div>
+          <div id="memberSummary" class="member-summary"></div>
           <div id="messages" class="messages"></div>
-          <form id="sendForm" class="composer"><input id="messageInput" maxlength="2000" placeholder="Write an encrypted message…" autocomplete="off" required><button class="primary" type="submit">Send ↑</button></form>
-          <p class="composer-note">Encrypted in your browser using AES-GCM; the AES key is wrapped with RSA-OAEP.</p>
+          <form id="sendForm" class="composer">
+            <input id="messageInput" maxlength="2000" placeholder="Write an encrypted message…" autocomplete="off" required>
+            <button class="primary" type="submit">Send ↑</button>
+          </form>
+          <p class="composer-note">Messages are encrypted on your device. ✓ Sent · ✓✓ Delivered · <span class="blue-example">✓✓ Seen</span></p>
         </div>
       </section>
     </section>
@@ -61,16 +85,16 @@
   </main>
 
   <dialog id="newChatDialog" class="dialog">
-    <form method="dialog" id="newChatForm">
-      <div class="dialog-head"><h3>Start a conversation</h3><button class="icon-btn" value="cancel">✕</button></div>
-      <p class="muted">Enter the other person's chat ID.</p>
-      <label>Chat ID</label><input id="peerIdInput" placeholder="e.g. SC-8F2A91" required>
-      <button class="primary full" id="findPeerBtn" type="button">Find user</button>
-      <div id="peerPreview" class="peer-preview hidden"></div>
-      <button class="secondary full hidden" id="openChatBtn" type="button">Open conversation</button>
-    </form>
+    <div class="dialog-head"><div><span class="eyebrow">NEW CONVERSATION</span><h3>Add people by User ID</h3></div><button id="closeDialog" class="icon-btn" type="button">✕</button></div>
+    <p class="muted">Enter one or more IDs, separated by spaces, commas or new lines. Everyone you add will be able to read messages in this group.</p>
+    <label for="memberIds">User IDs</label>
+    <textarea id="memberIds" rows="3" placeholder="SC-8F2A91, SC-4B71C2"></textarea>
+    <label for="groupName">Group name <span class="optional">(optional)</span></label>
+    <input id="groupName" maxlength="50" placeholder="e.g. Project team">
+    <button class="secondary full" id="lookupMembersBtn" type="button">Find members</button>
+    <div id="lookupResults" class="lookup-results"></div>
+    <button class="primary full" id="createChatBtn" type="button">Create conversation</button>
   </dialog>
-
   <script type="module" src="app.js"></script>
 </body>
 </html>
