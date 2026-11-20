@@ -92,23 +92,56 @@ async function enterApp(user, name = "") {
   listenIncomingMessages();
   setupNotifications();
 }
+function authErrorText(error) {
+  const code = error?.code || "";
+  const messages = {
+    "auth/operation-not-allowed": "Email/Password sign-in is disabled in Firebase. Firebase Console → Authentication → Sign-in method → Email/Password → Enable, then Save.",
+    "auth/unauthorized-domain": "This website domain is not authorized. Firebase Console → Authentication → Settings → Authorized domains → Add your current hostname (for local testing add localhost).",
+    "auth/invalid-api-key": "Firebase API key is invalid. Check firebase-config.js and confirm it belongs to project rsa-874d7.",
+    "auth/network-request-failed": "Firebase could not be reached. Check your internet connection, browser extensions, and open the site over HTTPS or localhost.",
+    "auth/email-already-in-use": "This email already has an account. Choose Sign in instead of Create account.",
+    "auth/weak-password": "The password is too weak. Use at least 6 characters.",
+    "auth/invalid-email": "Please enter a valid email address.",
+    "auth/invalid-credential": "Email or password is incorrect. Check both and try again.",
+    "auth/user-not-found": "No account was found for this email. Create an account first.",
+    "auth/wrong-password": "The password is incorrect. Try again.",
+    "auth/too-many-requests": "Too many attempts. Wait a little while before trying again."
+  };
+  return (messages[code] || error?.message || "Unknown Firebase Authentication error.")
+    + (code ? ` [${code}]` : "");
+}
 $("authForm").addEventListener("submit", async event => {
   event.preventDefault();
   const email = $("email").value.trim(), password = $("password").value;
   const name = $("displayName").value.trim();
+  const button = $("authSubmit");
+  const errorBox = $("authError");
+  errorBox.textContent = "";
+  errorBox.classList.add("hidden");
+  button.disabled = true;
+  const originalLabel = button.textContent;
+  button.textContent = authMode === "register" ? "Creating account…" : "Signing in…";
   try {
     if (authMode === "register") {
       if (!name) throw Error("Please enter your display name.");
-      // Set the name before auth changes so the auth-state callback can read it.
       sessionStorage.setItem("securechat-pending-name", name);
       await createUserWithEmailAndPassword(auth, email, password);
     } else {
       await signInWithEmailAndPassword(auth, email, password);
     }
-  } catch (error) { toast(error.message); }
+  } catch (error) {
+    sessionStorage.removeItem("securechat-pending-name");
+    errorBox.textContent = authErrorText(error);
+    errorBox.classList.remove("hidden");
+    toast(error?.code || error?.message || "Authentication failed");
+  } finally {
+    button.disabled = false;
+    button.textContent = originalLabel;
+  }
 });
 document.querySelectorAll(".tab").forEach(button => button.addEventListener("click", () => {
   authMode = button.dataset.tab;
+  if ($("authError")) { $("authError").textContent = ""; $("authError").classList.add("hidden"); }
   document.querySelectorAll(".tab").forEach(tab => tab.classList.toggle("active", tab === button));
   $("nameLabel").classList.toggle("hidden", authMode === "login");
   $("displayName").classList.toggle("hidden", authMode === "login");
