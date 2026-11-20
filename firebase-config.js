@@ -1,5 +1,5 @@
-// Firebase Web App configuration
-// This file contains public web-app configuration (not a service-account secret).
+// Firebase Web App configuration for project rsa-874d7.
+// These browser values are public Firebase identifiers, not service-account secrets.
 export const firebaseConfig = {
   apiKey: "AIzaSyDY0ewfoDntIm3JWdx8oaEF-DZXYLljOtQ",
   authDomain: "rsa-874d7.firebaseapp.com",
