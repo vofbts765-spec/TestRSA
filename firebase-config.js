@@ -1,11 +1,11 @@
-// 1) Create a Firebase project at https://console.firebase.google.com/
-// 2) Register a Web App and paste its config below.
-// 3) Enable Authentication > Email/Password and create a Firestore database.
+// Firebase Web App configuration
+// This file contains public web-app configuration (not a service-account secret).
 export const firebaseConfig = {
-  apiKey: "PASTE_YOUR_API_KEY",
-  authDomain: "PASTE_YOUR_PROJECT.firebaseapp.com",
-  projectId: "PASTE_YOUR_PROJECT_ID",
-  storageBucket: "PASTE_YOUR_PROJECT.appspot.com",
-  messagingSenderId: "PASTE_YOUR_SENDER_ID",
-  appId: "PASTE_YOUR_APP_ID"
+  apiKey: "AIzaSyDY0ewfoDntIm3JWdx8oaEF-DZXYLljOtQ",
+  authDomain: "rsa-874d7.firebaseapp.com",
+  projectId: "rsa-874d7",
+  storageBucket: "rsa-874d7.firebasestorage.app",
+  messagingSenderId: "692039532130",
+  appId: "1:692039532130:web:ef7d095b9642cf33dadb3b",
+  measurementId: "G-L52G9G3JZL"
 };
