@@ -1,22 +1,65 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    function signedIn() { return request.auth != null; }
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isConversationMember(conversationId) {
+      return signedIn()
+        && request.auth.uid in get(/databases/$(database)/documents/conversations/$(conversationId)).data.participants;
+    }
+
     match /users/{uid} {
-      // Authenticated users can read public profiles and public keys.
+      // Profiles and public encryption keys are discoverable by authenticated users.
       allow read: if signedIn();
-      // A user can create or update only their own profile.
       allow create, update: if signedIn() && request.auth.uid == uid;
       allow delete: if false;
     }
+
+    match /conversations/{conversationId} {
+      allow create: if signedIn()
+        && request.resource.data.createdBy == request.auth.uid
+        && request.auth.uid in request.resource.data.participants
+        && request.resource.data.participants.size() >= 2
+        && request.resource.data.participants.size() <= 20
+        && request.resource.data.memberProfiles.size() == request.resource.data.participants.size();
+      allow read: if signedIn() && request.auth.uid in resource.data.participants;
+      // Only the last-message preview and timestamp can be changed by a member.
+      allow update: if signedIn()
+        && request.auth.uid in resource.data.participants
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['lastMessage', 'updatedAt']);
+      allow delete: if false;
+    }
+
     match /messages/{messageId} {
       allow create: if signedIn()
         && request.resource.data.senderId == request.auth.uid
-        && request.resource.data.participants.size() == 2
         && request.auth.uid in request.resource.data.participants
-        && request.resource.data.receiverId in request.resource.data.participants;
+        && request.resource.data.participants.size() >= 2
+        && request.resource.data.participants.size() <= 20
+        && request.resource.data.conversationId is string
+        && isConversationMember(request.resource.data.conversationId)
+        && get(/databases/$(database)/documents/conversations/$(request.resource.data.conversationId)).data.participants
+          == request.resource.data.participants
+        && request.resource.data.wrappedKeys is map
+        && request.resource.data.wrappedKeys.keys().hasAll(request.resource.data.participants);
       allow read: if signedIn() && request.auth.uid in resource.data.participants;
-      allow update, delete: if false;
+      // Demo receipts are stored as arrays on the message. Only receipt fields can be updated.
+      allow update: if signedIn()
+        && request.auth.uid in resource.data.participants
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['deliveredTo', 'readBy'])
+        && request.resource.data.deliveredTo is list
+        && request.resource.data.readBy is list
+        && request.resource.data.deliveredTo.hasAll(resource.data.deliveredTo)
+        && request.resource.data.readBy.hasAll(resource.data.readBy)
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['deliveredTo'])
+            || request.auth.uid in request.resource.data.deliveredTo)
+        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['readBy'])
+            || request.auth.uid in request.resource.data.readBy);
+      allow delete: if false;
     }
   }
 }
